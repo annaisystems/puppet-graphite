@@ -69,9 +69,8 @@ class graphite::config_apache inherits graphite::params {
   apache::vhost { 'graphite' :
     port                        => $graphite::gr_apache_port,
     docroot                     => '/opt/graphite/webapp',
-    logroot                     => '/opt/graphite/storage',
-    access_log_file             => 'access.log',
-    error_log_file              => 'error.log',
+    access_log_file             => 'graphite-access.log',
+    error_log_file              => 'graphite-error.log',
     wsgi_application_group      => '%{GLOBAL}',
     wsgi_daemon_process         => 'graphite',
     wsgi_daemon_process_options => $graphite_wsgi_daemon_process_options,
@@ -84,4 +83,6 @@ class graphite::config_apache inherits graphite::params {
     custom_fragment             => $graphite_apache_custom_fragment,
     #add_listen                 => false,
   }
+
+  Package['whisper'] -> Apache::Vhost['graphite']
 }
