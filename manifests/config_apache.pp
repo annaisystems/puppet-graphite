@@ -13,6 +13,8 @@ class graphite::config_apache inherits graphite::params {
   include ::apache::mod::wsgi
   include ::apache::mod::headers
 
+  apache::listen { $graphite::gr_apache_port: }
+
   Exec { path => '/bin:/usr/bin:/usr/sbin' }
 
   # we need an apache with python support
@@ -22,29 +24,20 @@ class graphite::config_apache inherits graphite::params {
 
   $graphite_apache_directories = [
     {
-      path           => '/content/',
-      provider       => 'location',
-      options        => 'All',
-      allow_override => 'All',
-      auth_require   => 'all granted',
-    },
-
-    {
-      path           => '/media/',
-      provider       => 'location',
-      options        => 'All',
-      allow_override => 'All',
-      auth_require   => 'all granted',
-    },
-
-    {
-      path           => '/opt/graphite/conf',
-      provider       => 'directory',
-      options        => 'All',
-      allow_override => 'All',
-      auth_require   => 'all granted',
+      path     => '/opt/graphite/conf',
+      provider => 'directory',
+      allow    => 'from all',
     }
   ]
+
+  $graphite_apache_custom_fragment = '
+    <Location /content/>
+      SetHandler None
+    </Location>
+    <Location /media/>
+      SetHandler None
+    </Location>
+  '
 
   $graphite_apache_aliases = [
     {
@@ -53,7 +46,7 @@ class graphite::config_apache inherits graphite::params {
     },
     {
       alias => '/media/',
-      path  => '"@DJANGO_ROOT@/contrib/admin/media/"',
+      path  => '@DJANGO_ROOT@/contrib/admin/media/',
     }
   ]
 
@@ -65,14 +58,16 @@ class graphite::config_apache inherits graphite::params {
   }
 
   $graphite_wsgi_import_script_options = {
-	  process-group     => 'graphite',
+    process-group     => 'graphite',
     application-group => '%{GLOBAL}',
   }
 
-  apache::vhost { 'graphite':
-    servername                  => "${::fqdn}:${gr_apache_port}",
-    port                        => $gr_apache_port,
-    ssl                         => false,
+  $graphite_wsgi_script_aliases = {
+    '/' => '/opt/graphite/conf/graphite.wsgi'
+  }
+
+  apache::vhost { 'graphite' :
+    port                        => $graphite::gr_apache_port,
     docroot                     => '/opt/graphite/webapp',
     logroot                     => '/opt/graphite/storage',
     access_log_file             => 'access.log',
@@ -83,7 +78,10 @@ class graphite::config_apache inherits graphite::params {
     wsgi_process_group          => 'graphite',
     wsgi_import_script          => '/opt/graphite/conf/graphite.wsgi',
     wsgi_import_script_options  => $graphite_wsgi_import_script_options,
+    wsgi_script_aliases         => $graphite_wsgi_script_aliases,
     directories                 => $graphite_apache_directories,
     aliases                     => $graphite_apache_aliases,
+    custom_fragment             => $graphite_apache_custom_fragment,
+    #add_listen                 => false,
   }
 }
