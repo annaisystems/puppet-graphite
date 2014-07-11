@@ -47,6 +47,10 @@ class graphite::config_apache inherits graphite::params {
     {
       alias => '/media/',
       path  => '@DJANGO_ROOT@/contrib/admin/media/',
+    },
+    {
+      alias => '/grafana/',
+      path  => '/opt/grafana/src/',
     }
   ]
 
@@ -81,6 +85,7 @@ class graphite::config_apache inherits graphite::params {
     directories                 => $graphite_apache_directories,
     aliases                     => $graphite_apache_aliases,
     custom_fragment             => $graphite_apache_custom_fragment,
+    headers                     => $cors_headers,
     #add_listen                 => false,
   }
 

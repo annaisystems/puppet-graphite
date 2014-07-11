@@ -7,7 +7,7 @@
 #
 # None.
 #
-class graphite::params {
+class graphite::params ( $cors = false ){
   $build_dir = '/usr/local/src/'
 
   $python_pip_pkg = 'python-pip'
@@ -28,6 +28,12 @@ class graphite::params {
   $enable_carbon_relay = false
   $nginxconf_dir = '/etc/nginx/sites-available'
 
+  if ($cors) {
+    $cors_headers = ['set Access-Control-Allow-Origin "*"','set Access-Control-Allow-Methods "GET, OPTIONS"',
+                     'set Access-Control-Allow-Headers "origin, authorization, accept"']
+  } else {
+    $cors_headers = undef
+  }
 
   case $::osfamily {
     'debian': {
